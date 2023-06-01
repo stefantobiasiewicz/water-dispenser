@@ -15,11 +15,12 @@
 // #define BT_UUID_LBS_LED       BT_UUID_DECLARE_128(BT_UUID_LBS_LED_VAL)
 
 
-#define BT_UUID_WATER_DISPENSER     BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0))
-#define BT_UUID_IMPUSET             BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef1))
+#define BT_UUID_WATER_DISPENSER     BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef1))
+
+#define BT_UUID_IMPUSET             BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef2))
 #define BT_UUID_RUN                 BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef3))
-#define BT_UUID_ALL_IMPU            BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef5))
-#define BT_UUID_IDENTIFY            BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef7))
+#define BT_UUID_IDENTIFY            BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef4))
+#define BT_UUID_ON_OFF              BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef5))
 
 
 
@@ -45,17 +46,21 @@
 typedef void (*api_set_count_t)(const uint16_t count);
 typedef uint16_t (*api_get_count_t)();
 typedef void (*api_run_t)();
+typedef void (*api_run_stop_t)();
 typedef void (*api_identify_on_t)();
 typedef void (*api_identify_off_t)();
-typedef uint16_t (*api_get_all_count_t)();
+typedef void (*api_pump_on_t)();
+typedef void (*api_pump_off_t)();
 
 struct api_water_dispenser {
 	api_set_count_t api_set_count;
     api_get_count_t api_get_count;
     api_run_t api_run;
+    api_run_stop_t api_run_stop;
     api_identify_on_t api_identify_on;
     api_identify_off_t api_identify_off;
-    api_get_all_count_t api_get_all_count;
+    api_pump_on_t api_pump_on;
+    api_pump_off_t api_pump_off;
 };
 
 int radio_api_init(struct api_water_dispenser *callbacks);

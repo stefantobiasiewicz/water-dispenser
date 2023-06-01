@@ -10,66 +10,8 @@
 
 LOG_MODULE_DECLARE(radio, LOG_LEVEL_DBG);
 
-
-static bool                   button_state;
-// static struct my_lbs_cb       lbs_cb;
 static struct api_water_dispenser api_callbacks;
 
-
-// ssize_t read_button(struct bt_conn *conn,
-// 					    const struct bt_gatt_attr *attr,
-// 					    void *buf, uint16_t len,
-// 					    uint16_t offset) 
-// {
-// 	//get a pointer to button_state which is passed in the BT_GATT_CHARACTERISTIC() and stored in attr->user_data
-// 	const char *value = attr->user_data;
-
-// 	LOG_DBG("Attribute read, handle: %u, conn: %p", attr->handle,
-// 		(void *)conn);
-
-// 	if (lbs_cb.button_cb) {
-// 		// Call the application callback function to update the get the current value of the button
-// 		button_state = lbs_cb.button_cb();
-// 		return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
-// 					 sizeof(*value));
-// 	}
-
-// 	return 0;
-// }
-
-// ssize_t write_led(struct bt_conn *conn,
-// 					     const struct bt_gatt_attr *attr,
-// 					     const void *buf, uint16_t len,
-// 					     uint16_t offset, uint8_t flags) 
-// {
-// 	LOG_DBG("Attribute write, handle: %u, conn: %p", attr->handle,
-// 		(void *)conn);
-
-// 	if (len != 1U) {
-// 		LOG_DBG("Write led: Incorrect data length");
-// 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
-// 	}
-
-// 	if (offset != 0) {
-// 		LOG_DBG("Write led: Incorrect data offset");
-// 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-// 	}
-
-// 	if (lbs_cb.led_cb) {
-// 		//Read the received value 
-// 		uint8_t val = *((uint8_t *)buf);
-
-// 		if (val == 0x00 || val == 0x01) {
-// 			//Call the application callback function to update the LED state
-// 			lbs_cb.led_cb(val ? true : false);
-// 		} else {
-// 			LOG_DBG("Write led: Incorrect value");
-// 			return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
-// 		}
-// 	}
-
-// 	return len;
-// }
 
 static uint16_t imps = 0;
 
@@ -132,6 +74,9 @@ ssize_t bt_run(struct bt_conn *conn,
 		if (val == 0x01) {
 			api_callbacks.api_run();
 			imps = 0;
+		} else if (val == 0x00) {
+			api_callbacks.api_run_stop();
+			imps = 0;
 		}
 		else {
 			LOG_DBG("Write led: Incorrect value");
@@ -141,29 +86,6 @@ ssize_t bt_run(struct bt_conn *conn,
 
 	return len;
 }	
-
-static uint16_t all_imps = 0;
-
-ssize_t bt_read_all(struct bt_conn *conn,
-					    const struct bt_gatt_attr *attr,
-					    void *buf, uint16_t len,
-					    uint16_t offset) 
-{
-	LOG_INF("bt_read_all");
-
-	//get a pointer to button_state which is passed in the BT_GATT_CHARACTERISTIC() and stored in attr->user_data
-	uint16_t *value = attr->user_data;
-
-	LOG_DBG("Attribute read, handle: %u, conn: %p", attr->handle,
-		(void *)conn);
-
-	*value += 1;
-
-	return bt_gatt_attr_read(conn, attr, buf, len, offset, value, sizeof(*value));
-	
-
-	return 0;
-}
 
 ssize_t bt_identify(struct bt_conn *conn,
 					     const struct bt_gatt_attr *attr,
@@ -201,6 +123,43 @@ ssize_t bt_identify(struct bt_conn *conn,
 	return len;
 }	
 
+ssize_t bt_on_off(struct bt_conn *conn,
+					     const struct bt_gatt_attr *attr,
+					     const void *buf, uint16_t len,
+					     uint16_t offset, uint8_t flags) 
+{
+	LOG_INF("bt_on_off");
+	LOG_DBG("data len: %d, offset: %d, flags: %d", len, offset, flags);
+
+	LOG_DBG("Attribute write, handle: %u, conn: %p", attr->handle, (void *)conn);
+
+	if (len != 1U) {
+		LOG_DBG("Write led: Incorrect data length");
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
+	}
+
+	if (offset != 0) {
+		LOG_DBG("Write led: Incorrect data offset");
+		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
+	}
+
+	if (api_callbacks.api_run) {
+		uint8_t val = *((uint8_t *)buf);
+
+		if (val == 0x01) {
+			api_callbacks.api_pump_on();
+		} else if (val == 0x00) {
+			api_callbacks.api_pump_off();
+		}
+		else {
+			LOG_DBG("Write led: Incorrect value");
+			return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
+		}
+	}
+
+	return len;
+}	
+
 BT_GATT_SERVICE_DEFINE(my_lbs_svc,
 	BT_GATT_PRIMARY_SERVICE(BT_UUID_WATER_DISPENSER),
 	BT_GATT_CHARACTERISTIC(BT_UUID_IMPUSET,
@@ -215,17 +174,17 @@ BT_GATT_SERVICE_DEFINE(my_lbs_svc,
 					NULL,
 					bt_run,
 					NULL),
-	BT_GATT_CHARACTERISTIC(BT_UUID_ALL_IMPU,
-					BT_GATT_CHRC_READ,
-					BT_GATT_PERM_READ,
-					bt_read_all,
-					NULL,
-					&all_imps),
 	BT_GATT_CHARACTERISTIC(BT_UUID_IDENTIFY,
 					BT_GATT_CHRC_WRITE,
 					BT_GATT_PERM_WRITE,
 					NULL,
 					bt_identify,
+					NULL),
+	BT_GATT_CHARACTERISTIC(BT_UUID_ON_OFF,
+					BT_GATT_CHRC_WRITE,
+					BT_GATT_PERM_WRITE,
+					NULL,
+					bt_on_off,
 					NULL),
 );
 
@@ -343,12 +302,14 @@ static int radio_init() {
 
 int radio_api_init(struct api_water_dispenser *callbacks) {
 	if(callbacks) {
-		api_callbacks.api_get_all_count = callbacks->api_get_all_count;
 		api_callbacks.api_get_count = callbacks->api_get_count;
 		api_callbacks.api_set_count = callbacks->api_set_count;
 		api_callbacks.api_identify_off = callbacks->api_identify_off;
 		api_callbacks.api_identify_on = callbacks->api_identify_on;
 		api_callbacks.api_run = callbacks->api_run;
+		api_callbacks.api_run_stop = callbacks->api_run_stop;
+		api_callbacks.api_pump_on = callbacks->api_pump_on;
+		api_callbacks.api_pump_off = callbacks->api_pump_off;
 	}
 
 	return radio_init();

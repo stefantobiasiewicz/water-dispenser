@@ -23,9 +23,12 @@
 void app_set_count(const uint16_t count);
 uint16_t app_get_count();
 void app_run();
+void app_run_stop();
 void app_identify_on();
 void app_identify_off();
-uint16_t app_get_all_count();
+void app_pump_on();
+void app_pump_off();
+
 
 void app_one_impuls_callback(); 
 

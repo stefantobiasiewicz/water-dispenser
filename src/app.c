@@ -7,7 +7,6 @@ LOG_MODULE_DECLARE(app, LOG_LEVEL_DBG);
 
 static struct hardware_api hardware;
 
-static uint16_t impuls_count_all = 0;
 static uint16_t impuls_count = 0;
 static volatile uint16_t impuls_count_readed = 0;
 
@@ -20,27 +19,39 @@ static bool blinking_on = false;
 
 
 void app_set_count(const uint16_t count) {
+    LOG_INF("setting impuls count: %d", impuls_count);
     impuls_count = count;
 }
 
 uint16_t app_get_count() {
+    LOG_INF("reading impuls count: %d", impuls_count);
     return impuls_count_readed;
 }
 
 void app_run() {
-    if (impuls_count != 0) {
+    if (impuls_count == 0) {
         // error
-        LOG_ERR("error");
+        LOG_ERR("error - impuls_count == 0");
+        return;
     }
-
-    impuls_count_all += impuls_count;
 
     impuls_count_readed = 0;
 
     // run method
+
+    LOG_INF("run method started, impuls: %d", impuls_count);
+
     is_running = true;
     hardware.pump_on();
     hardware.led_red_on();
+}
+
+void app_run_stop() {
+    LOG_INF("run method stopped!");
+    impuls_count = 0;
+    is_running = false;
+    hardware.pump_off();
+    hardware.led_red_off();
 }
 
 //todo initalize in hardware
@@ -49,20 +60,30 @@ void app_one_impuls_callback() {
     impuls_count_readed ++;
 }
 
-uint16_t app_get_all_count() {
-    return impuls_count_all;
-}
-
 void app_identify_on() {
     // blinking on
+    LOG_INF("identyfy start!");
     is_blinking = true;
     hardware.led_yellow_on();
 }
 
 void app_identify_off() {
     // stop blinking
+    LOG_INF("identyfy stopped!");
     is_blinking = false;
     hardware.led_yellow_off();
+}
+
+void app_pump_on() {
+    LOG_INF("pump on!");
+    hardware.pump_on();
+    hardware.led_red_on();
+}
+
+void app_pump_off() {
+    LOG_INF("pump off!");
+    hardware.pump_off();
+    hardware.led_red_off();
 }
 
 
@@ -72,6 +93,8 @@ void app_main_loop_function() {
             is_running = false;
             hardware.pump_off();
             hardware.led_red_off();
+
+            LOG_INF("run method finished!");
         }
     }
     if(is_blinking) {

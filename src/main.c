@@ -25,10 +25,12 @@ static struct hardware_cb hadware_callback = {
 static struct api_water_dispenser radio_api = {
     .api_set_count = app_set_count,
     .api_get_count = app_get_count,
-    .api_get_all_count = app_get_all_count,
     .api_run = app_run,
+    .api_run_stop = app_run_stop,
     .api_identify_on = app_identify_on,
-    .api_identify_off = app_identify_off
+    .api_identify_off = app_identify_off,
+    .api_pump_on = app_pump_on,
+    .api_pump_off = app_pump_off
 };
 
 static struct hardware_api hardware_api_impl = {
