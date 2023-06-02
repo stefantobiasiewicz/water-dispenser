@@ -212,7 +212,7 @@ static const struct bt_data ad[] = {
 /*scan response*/
 static const struct bt_data sd[] = {
         /* 4.2.3 Include the URL data in the scan response packet*/
-        BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_128_ENCODE(0x12345678, 0x1234, 0x5678, 0x1234, 0x56789abcdef0)),
+        BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_WATER_DISPENSER_ENCODED),
 };
 
 
