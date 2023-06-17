@@ -1,0 +1,94 @@
+// Copyright (c) 2023 Nordic Semiconductor ASA
+// SPDX-License-Identifier: Apache-2.0
+
+/dts-v1/;
+#include <nordic/nrf52820_qdaa.dtsi>
+
+/ {
+	model = "ST_WD_52820";
+	compatible = "st,st-wd-52820";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+		zephyr,console = &uart0;
+	};
+
+
+	gpio_output {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+			label = "yelow led";
+		};
+		led1: led_1 {
+			gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>;
+			label = "red led";
+		};
+	};
+	pwm_gpio {
+		compatible = "pwm-leds";
+		pump: pump {
+			pwms = < &sw_pwm 0 2000 PWM_POLARITY_NORMAL >;
+			label = "pump/valve output for controling water flow";
+		};
+	};
+
+	gpio_input {
+		compatible = "gpio-keys";
+		flow_meter: flow_meter {
+			gpios = < &gpio0 14 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+			label = "water flow impuls meter";
+		}; 	
+	};
+};
+
+&sw_pwm {
+	status = "okay";
+	clock-prescaler = < 0 >;
+	channel-gpios = <&gpio0 15 GPIO_ACTIVE_HIGH>;
+};
+
+
+&gpio0 {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	rx-pin = < 30 >;
+	tx-pin = < 28 >;
+};
+
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x0 0xc000>;
+		};
+		slot0_partition: partition@c000 {
+			label = "image-0";
+			reg = <0xc000 0x12000>;
+		};
+		slot1_partition: partition@1e000 {
+			label = "image-1";
+			reg = <0x1e000 0x12000>;
+		};
+		scratch_partition: partition@30000 {
+			label = "image-scratch";
+			reg = <0x30000 0xa000>;
+		};
+		storage_partition: partition@3a000 {
+			label = "storage";
+			reg = <0x3a000 0x6000>;
+		};
+	};
+};
+
